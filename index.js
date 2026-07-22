@@ -2,11 +2,16 @@ const express = require('express')
 const pool = require('./db')
 const app = express()
 const cors = require('cors')
+const authRouter = require('./features/auth/auth')
+const verifyToken = require('./features/auth/middleware')
+app.use(express.json())
+app.use(express.json())
+app.use('/auth', authRouter)
 app.use(cors())
 
-app.use(express.json())
 
-app.get('/produk', async function(req, res) {
+// Pakai middleware di route yang mau diproteksi
+app.get('/produk', verifyToken, async function(req, res) {
     try {
         const result = await pool.query('SELECT * FROM produk')
         res.json(result.rows)
@@ -36,7 +41,7 @@ app.post('/produk', async function(req, res) {
             'INSERT INTO produk (nama, stok, harga) VALUES ($1, $2, $3) RETURNING *',
             [nama, stok, harga]
         )
-        res.status(201).json(result.rows[0])
+        // res.status(201).json(result.rows[0])
         res.json(result.rows[0])
     } catch (err) {
       res.status(500).json({ pesan: 'Gagal tambah data' })
@@ -63,6 +68,7 @@ app.delete('/produk/:id', async function(req, res){
         res.status(500).json({pesan:'gagal menghapus data'})
     }
 })
+
 
 app.listen(3000, function() {
     console.log('Server jalan di http://localhost:3000')
